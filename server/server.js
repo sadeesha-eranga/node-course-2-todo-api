@@ -16,12 +16,12 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 app.post('/todos', (req, res) => {
-    let todo = new Todo({
+    var todo = new Todo({
         text: req.body.text
     });
 
-    todo.save().then((result) => {
-        res.send(result);
+    todo.save().then((doc) => {
+        res.send(doc);
     }, (e) => {
         res.status(400).send(e);
     });
@@ -29,7 +29,7 @@ app.post('/todos', (req, res) => {
 
 app.get('/todos', (req, res) => {
     Todo.find().then((todos) => {
-        res.send({todos});
+        res.send({ todos });
     }, (e) => {
         res.status(400).send(e);
     });
@@ -59,7 +59,7 @@ app.delete('/todos/:id', (req, res) => {
     }
     Todo.findByIdAndRemove(id).then((todo) => {
         if (!todo) {
-            return res.status(404).send();
+            return res.status(404).send();``
         } 
         res.send({todo}); 
     }, (e) => {
@@ -107,6 +107,18 @@ app.post('/users', (req, res) => {
 
 app.get('/users/me', authenticate, (req, res) => {
     res.send(req.user);
+});
+
+app.post('/users/login', (req, res) => {
+    let body = _.pick(req.body, ['email', 'password']);
+
+    User.findByCredentials(body.email, body.password).then((user) => {
+        user.generateAuthToken().then((token) => {
+            res.header('x-auth', token).send(user);
+        });
+    }).catch((e) => {
+        res.status(400).send();
+    });
 });
 
 app.listen(port, () => {
